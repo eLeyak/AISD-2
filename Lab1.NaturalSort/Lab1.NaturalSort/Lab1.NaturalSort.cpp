@@ -1,20 +1,96 @@
-﻿// Lab1.NaturalSort.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
+﻿#include <iostream>
+#include <string>
+#include <fstream>
 
-#include <iostream>
+using namespace std;
 
+bool createFileWithRandomNumbers(const string& fileName, const int numbersCount, const int maxNumberValue) {
+	ofstream file(fileName);
+	if (!file.is_open()) {
+		cout << "Can't create " << fileName << endl;
+		return false;
+	}
+
+	int buf;
+	srand(time(NULL));
+	for (int i = 0; i < numbersCount; i++) {
+		buf = rand() % (maxNumberValue + 1);
+		file << buf << ' ';
+	}
+
+	file.close();
+	return true;
+}
+bool isFileContainsSortedArray(const string& fileName) {
+	ifstream file(fileName);
+	if (!file.is_open()) {
+		cout << "Can't open " << fileName << endl;
+		return false;
+	}
+
+	int current = -1;
+	int previous;
+	while (!file.eof()) {
+		previous = current;
+		file >> current;
+		if (current < previous) {
+			return false;
+		}
+	}
+
+	file.close();
+	return true;
+}
+void split(const string& fileInput, const string& fileOutputOne, const string& fileOutputTwo) {
+	ifstream input(fileInput);
+	if (!input.is_open()) {
+		cout << "Can't open " << fileInput << endl;
+		return;
+	}
+
+	ofstream outputOne(fileOutputOne);
+	if (!outputOne.is_open()) {
+		cout << "Can't open " << fileOutputOne << endl;
+		return;
+	}
+
+	ofstream outputTwo(fileOutputTwo);
+	if (!outputOne.is_open()) {
+		cout << "Can't open " << fileOutputTwo << endl;
+		return;
+	}
+
+	ofstream* output;
+	output = &outputOne;
+
+	int outputSwitch = 0;
+
+	int current = -1;
+	int previous = -1;
+
+	input >> current;
+	while (!input.eof()) {
+		if (current < previous) {
+			if (outputSwitch % 2) {
+				output = &outputOne;
+			}
+			else {
+				output = &outputTwo;
+			}
+			outputSwitch++;
+		}
+		*output << current << " ";
+		previous = current;
+		input >> current;
+	}
+
+	input.close();
+	outputOne.close();
+	outputTwo.close();
+}
 int main()
 {
-    std::cout << "Hello World!\n";
+	createFileWithRandomNumbers("test1.txt", 10, 100);
+	split("test1.txt", "Sort1.txt", "Sort2.txt");
+	return 0;
 }
-
-// Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
-// Отладка программы: F5 или меню "Отладка" > "Запустить отладку"
-
-// Советы по началу работы 
-//   1. В окне обозревателя решений можно добавлять файлы и управлять ими.
-//   2. В окне Team Explorer можно подключиться к системе управления версиями.
-//   3. В окне "Выходные данные" можно просматривать выходные данные сборки и другие сообщения.
-//   4. В окне "Список ошибок" можно просматривать ошибки.
-//   5. Последовательно выберите пункты меню "Проект" > "Добавить новый элемент", чтобы создать файлы кода, или "Проект" > "Добавить существующий элемент", чтобы добавить в проект существующие файлы кода.
-//   6. Чтобы снова открыть этот проект позже, выберите пункты меню "Файл" > "Открыть" > "Проект" и выберите SLN-файл.
