@@ -42,7 +42,7 @@ bool isFileContainsSortedArray(const string& fileName) {
 	return true;
 }
 
-void firstSplit(const string& fileInput, const string& fileOutputOne, const string& fileOutputTwo, int steps) {
+void split(const string& fileInput, const string& fileOutputOne, const string& fileOutputTwo, int steps) {
 	ifstream input(fileInput);
 	if (!input.is_open()) {
 		cout << "Can't open " << fileInput << endl;
@@ -76,181 +76,279 @@ void firstSplit(const string& fileInput, const string& fileOutputOne, const stri
 			}
 		}
 	}
+
+	input.close();
+	outputOne.close();
+	outputTwo.close();
 }
-void mergeAndSplit(const string& fileInputOne, const string& fileInputTwo, const string& fileOutputOne, const string& fileOutputTwo, int steps) {
-	ifstream inputOne(fileInputOne);
-	if (!inputOne.is_open()) {
-		cout << "Can't open " << fileInputOne << endl;
-		return;
-	}
-
-	ifstream inputTwo(fileInputTwo);
-	if (!inputTwo.is_open()) {
-		cout << "Can't open " << fileInputTwo << endl;
-		return;
-	}
-
-	ofstream outputOne(fileOutputOne);
-	if (!outputOne.is_open()) {
-		cout << "Can't open " << fileOutputOne << endl;
-		return;
-	}
-
-	ofstream outputTwo(fileOutputTwo);
-	if (!outputOne.is_open()) {
-		cout << "Can't open " << fileOutputTwo << endl;
-		return;
-	}
-
-	int bufferOne;
-	int bufferTwo;
-	int counterOne;
-	int counterTwo;
-	int inputStopOne;
-	int inputStopTwo;
-
-	int fileOfOutput = 0;
-	int universalCounter = 0;
+int sortAndMergeASegment(ifstream &inputOne, ifstream & inputTwo, ofstream& output, int steps) {
+	int bufferOne = -1;
+	int bufferTwo = -1;
+	int readCounterOne = 0;
+	int readCounterTwo = 0;
+	int printCounterOne = 0;
+	int printCounterTwo = 0;
+	int inputStopOne = 0;
+	int inputStopTwo = 0;
+	int endOfSegemnt = 0;
 	int endOfFile = 0;
-
-	while (!endOfFile) {
-		bufferOne = -1;
-		bufferTwo = -1;
-		counterOne = 0;
-		counterTwo = 0;
-		inputStopOne = 0;
-		inputStopTwo = 0;
-
-		while (counterOne < steps || counterTwo < steps) {
-			if (universalCounter % (steps * 2) == 0) {
-				fileOfOutput++;
-			}
-
-			if (counterOne < steps && !inputStopOne) {
-				inputOne >> bufferOne;
-			}
-			else if (counterOne == steps) {
-				while (counterTwo < steps) {
-					if (!inputTwo.eof()) {
-						if (fileOfOutput % 2) {
-							outputOne << bufferTwo << " ";
-						}
-						else {
-							outputTwo << bufferTwo << " ";
-						}
-						counterTwo++;
-						universalCounter++;
-						if (counterTwo < steps) {
-							inputTwo >> bufferTwo;
-						}
-					}
-				}
-			}
-
-			if (counterTwo < steps && !inputStopTwo) {
-				inputTwo >> bufferTwo;
-			}
-			else if (counterTwo == steps) {
-				while (counterOne < steps) {
-					if (!inputOne.eof()) {
-						if (fileOfOutput % 2) {
-							outputOne << bufferOne << " ";
-						}
-						else {
-							outputTwo << bufferOne << " ";
-						}
-						counterOne++;
-						universalCounter++;
-						if (counterOne < steps) {
-							inputOne >> bufferOne;
-						}
-					}
-				}
-			}
-
-			if (!inputOne.eof() && !inputTwo.eof() && counterOne < steps && counterTwo < steps) {
-				if (bufferOne < bufferTwo) {
-					if (fileOfOutput % 2) {
-						outputOne << bufferOne << " ";
-					}
-					else {
-						outputTwo << bufferOne << " ";
-					}
-					counterOne++;
-					universalCounter++;
-					inputStopTwo = 1;
-					inputStopOne = 0;
-				}
-				else {
-					if (fileOfOutput % 2) {
-						outputOne << bufferTwo << " ";
-					}
-					else {
-						outputTwo << bufferTwo << " ";
-					}
-					counterTwo++;
-					universalCounter++;
-					inputStopOne = 1;
-					inputStopTwo = 0;
-				}
-			}
-			else if (inputOne.eof()) {
-				while (!inputTwo.eof()) {
-					if (fileOfOutput % 2) {
-						outputOne << bufferTwo << " ";
-					}
-					else {
-						outputTwo << bufferTwo << " ";
-					}
-					inputTwo >> bufferTwo;
-				}
+	
+	while (!endOfSegemnt) {
+		if (readCounterOne < steps && !inputStopOne) {
+			inputOne >> bufferOne;
+			if (inputOne.eof()) {
 				endOfFile = 1;
 				break;
 			}
-			else if (inputTwo.eof()) {
-				while (!inputOne.eof()) {
-					if (fileOfOutput % 2) {
-						outputOne << bufferOne << " ";
-					}
-					else {
-						outputTwo << bufferOne << " ";
-					}
-					inputOne >> bufferOne;
-				}
-				endOfFile = 1;
+			readCounterOne++;
+		}
+		else if (printCounterOne == steps) {
+			endOfSegemnt = 1;
+			break;
+		}
+
+		if (readCounterTwo < steps && !inputStopTwo) {
+			inputTwo >> bufferTwo;
+			if (inputTwo.eof()) {
+				endOfFile = 2;
+				break;
+			}
+			readCounterTwo++;
+		}
+		else if (printCounterTwo == steps) {
+			endOfSegemnt = 2;
+			break;
+		}
+
+		if (bufferOne < bufferTwo) {
+			output << bufferOne << " ";
+			inputStopOne = 0;
+			inputStopTwo = 1;
+			printCounterOne++;
+		}
+		else {
+			output << bufferTwo << " ";
+			inputStopOne = 1;
+			inputStopTwo = 0;
+			printCounterTwo++;
+		}
+	}
+
+	if (endOfFile == 1) {
+		if (printCounterTwo < readCounterTwo) {
+			output << bufferTwo << " ";
+		}
+		inputTwo >> bufferTwo;
+		while (!inputTwo.eof()) {
+			output << bufferTwo << " ";
+			inputTwo >> bufferTwo;
+		}
+		return 1;
+	}
+	else if (endOfFile == 2) {
+		if (printCounterOne < readCounterOne) {
+			output << bufferOne << " ";
+		}
+		inputOne >> bufferOne;
+		while (!inputOne.eof()) {
+			output << bufferOne << " ";
+			inputOne >> bufferOne;
+		}
+		return 1;
+	}
+
+	if (endOfSegemnt == 1) {
+		if (printCounterTwo < readCounterTwo) {
+			output << bufferTwo << " ";
+			printCounterTwo++;
+		}
+		while (printCounterTwo < steps) {
+			inputTwo >> bufferTwo;
+			output << bufferTwo << " ";
+			printCounterTwo++;
+		}
+	}
+	else {
+		if (printCounterOne < readCounterOne) {
+			output << bufferOne << " ";
+			printCounterOne++;
+		}
+		while (printCounterOne < steps) {
+			inputOne >> bufferOne;
+			output << bufferOne << " ";
+			printCounterOne++;
+		}
+	}
+
+	return 0;
+}
+void mergeSort(const string& fileInput) {
+	split(fileInput, "sort1.txt", "sort2.txt", 1);
+	
+	int fileSwitch = 1;
+	int outputSwitch = 1;
+	int steps = 1;
+	int fileCheck = 0;
+
+	int flag;
+
+	while (fileSwitch) {
+		flag = 0;
+		if (fileSwitch % 2) {
+			ifstream inputOne("sort1.txt");
+			if (!inputOne.is_open()) {
+				cout << "Can't open " << "sort1.txt" << endl;
+				return;
+			}
+
+			ifstream inputTwo("sort2.txt");
+			if (!inputTwo.is_open()) {
+				cout << "Can't open " << "sort2.txt" << endl;
+				return;
+			}
+
+			ofstream outputOne("sort3.txt");
+			if (!outputOne.is_open()) {
+				cout << "Can't open " << "sort3.txt" << endl;
+				return;
+			}
+
+			ofstream outputTwo("sort4.txt");
+			if (!outputOne.is_open()) {
+				cout << "Can't open " << "sort4.txt" << endl;
+				return;
+			}
+
+			inputTwo >> fileCheck;
+			if (inputTwo.eof()) {
+				fileCheck = 1;
 				break;
 			}
 			else {
+				inputTwo.seekg(0);
+			}
+
+			while (!flag) {
+				if (outputSwitch % 2) {
+					flag = sortAndMergeASegment(inputOne, inputTwo, outputOne, steps);
+				}
+				else {
+					flag = sortAndMergeASegment(inputOne, inputTwo, outputTwo, steps);
+				}
+				outputSwitch++;
+			}
+
+			inputOne.close();
+			inputTwo.close();
+			outputOne.close();
+			outputTwo.close();
+		}
+		else {
+			ifstream inputOne("sort3.txt");
+			if (!inputOne.is_open()) {
+				cout << "Can't open " << "sort1.txt" << endl;
+				return;
+			}
+
+			ifstream inputTwo("sort4.txt");
+			if (!inputTwo.is_open()) {
+				cout << "Can't open " << "sort2.txt" << endl;
+				return;
+			}
+
+			ofstream outputOne("sort1.txt");
+			if (!outputOne.is_open()) {
+				cout << "Can't open " << "sort3.txt" << endl;
+				return;
+			}
+
+			ofstream outputTwo("sort2.txt");
+			if (!outputOne.is_open()) {
+				cout << "Can't open " << "sort4.txt" << endl;
+				return;
+			}
+
+			inputTwo >> fileCheck;
+			if (inputTwo.eof()) {
+				fileCheck = 3;
 				break;
 			}
+			else {
+				inputTwo.seekg(0);
+			}
+
+			while (!flag) {
+				if (outputSwitch % 2) {
+					flag = sortAndMergeASegment(inputOne, inputTwo, outputOne, steps);
+				}
+				else {
+					flag = sortAndMergeASegment(inputOne, inputTwo, outputTwo, steps);
+				}
+				outputSwitch++;
+			}
+
+			inputOne.close();
+			inputTwo.close();
+			outputOne.close();
+			outputTwo.close();
+		}
+		fileSwitch++;
+		steps = steps << 1;
+	}
+
+	int buffer;
+
+	if (fileCheck == 1) {
+		ifstream input("sort1.txt");
+		if (!input.is_open()) {
+			cout << "Can't open " << "sort1.txt" << endl;
+			return;
+		}
+
+		ofstream output("output.txt");
+		if (!output.is_open()) {
+			cout << "Can't open " << "output.txt" << endl;
+			return;
+		}
+
+		input >> buffer;
+		while (!input.eof()) {
+			output << buffer << " ";
+			input >> buffer;
 		}
 	}
-	
+	else {
+		ifstream input("sort3.txt");
+		if (!input.is_open()) {
+			cout << "Can't open " << "sort3.txt" << endl;
+			return;
+		}
 
-	
+		ofstream output("output.txt");
+		if (!output.is_open()) {
+			cout << "Can't open " << "output.txt" << endl;
+			return;
+		}
 
-	
-
-
-		
+		input >> buffer;
+		while (!input.eof()) {
+			output << buffer << " ";
+			input >> buffer;
+		}
 	}
+}
 
 int main()
 {
-	createFileWithRandomNumbers("test1.txt", 2, 100);
-	firstSplit("test1.txt", "test2.txt", "test3.txt", 1);
-	mergeAndSplit("test2.txt", "test3.txt", "test4.txt", "test5.txt", 1);
-	mergeAndSplit("test4.txt", "test5.txt", "test6.txt", "test7.txt", 2);
-	mergeAndSplit("test6.txt", "test7.txt", "test8.txt", "test9.txt", 4);
-	mergeAndSplit("test8.txt", "test9.txt", "test10.txt", "test11.txt", 8);
-	if (isFileContainsSortedArray) {
-		cout << "success";
+	for (int i = 0; i < 100; i++) {
+		createFileWithRandomNumbers("test1.txt", 100, 100);
+		mergeSort("test1.txt");
+		if (isFileContainsSortedArray("output.txt")) {
+			cout << "success" << endl;
+		}
+		else {
+			cout << "fail" << endl;
+		}
 	}
-	else {
-		cout << "fail";
-	}
-
-
-
 	return 0;
 }
